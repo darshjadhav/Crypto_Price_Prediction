@@ -6,26 +6,28 @@ import datetime as dt
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.layers import Dense, Dropout, LSTM
 from tensorflow.keras.models import Sequential
-import matplotlib as plt
+import matplotlib.pyplot as plt
 
-def read_data(cryptopair):
+def read_data(cryptopair, future_days):
     
     # Training Data
     start = dt.datetime(2016,1,1)
-    end = dt.datetime(2021,1,1)
+    # end = dt.datetime(2021,1,1)
+    end = dt.datetime.now()
 
     coin = pdr.DataReader(cryptopair, 'yahoo', start, end)
-    # print(coin.columns)
+    dateindex = coin.index
     scalar = MinMaxScaler(feature_range=(0,1))
     coindata = scalar.fit_transform(coin["Close"].values.reshape(-1,1))
 
     day_range = 30
+    
     x_train = []
     y_train = []
 
-    for i in range(day_range, len(coindata)):
+    for i in range(day_range, len(coindata)-future_days):
         x_train.append(coindata[i - day_range:i, 0]) # Get data between day range
-        y_train.append(coindata[i, 0]) # Get close value at day 'n'
+        y_train.append(coindata[i + future_days, 0]) # Get close value at day 'n'
         
     x_train, y_train = np.array(x_train), np.array(y_train)
     x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
@@ -46,11 +48,11 @@ def read_data(cryptopair):
     x_test = np.array(x_test)
     x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
 
-    return x_train, y_train, x_test, y_test
+    return x_train, y_train, x_test, y_test, scalar, dateindex
     
 
 
-def model(x_train, y_train, x_test):
+def model(x_train, y_train, x_test, scalar):
     # Model Architecture
     model = Sequential()
     model.add(LSTM(units=50, return_sequences=True, input_shape=(x_train.shape[1],1)))
@@ -63,22 +65,27 @@ def model(x_train, y_train, x_test):
 
     # Train Model
     model.compile(optimizer="adam", loss="mean_squared_error")
-    model.fit(x_train, y_train, epochs=30, batch_size=32)
+    model.fit(x_train, y_train, epochs=2, batch_size=32)
 
     # Test Model
 
     y_pred = model.predict(x_test)
-    scalar = MinMaxScaler(feature_range=(0,1))
     y_pred = scalar.inverse_transform(y_pred)
 
     return y_pred
 
 
 
-def plot_results(cryptopair, y_pred, y_test):
+def plot_results(cryptopair, future_days, dateindex, y_pred, y_test):
+    future_bias = np.zeros((future_days,1))
+    predictions = np.concatenate((future_bias,y_pred), axis=0)
+    # print(y_test.shape)
+    # print(predictions.shape)
+    # print(dateindex.shape)
+    datevals = dateindex[dateindex.shape[0] - y_test.shape[0]:dateindex.shape[0]]
     plt.figure()
-    plt.plot(y_test, color="black", label="Actual Prices")
-    plt.plot(y_pred, color="red", label="Predicted Prices")
+    plt.plot(datevals, y_test, color="black", label="Actual Prices")
+    plt.plot(datevals, predictions, color="red", label="Predicted Prices")
     plt.title(f"{cryptopair} Price Prediction")
     plt.xlabel("Time")
     plt.ylabel("Price")
@@ -89,9 +96,10 @@ def plot_results(cryptopair, y_pred, y_test):
 
 def main():
     cryptopair = "ETH-USD"
-    x_train, y_train, x_test, y_test = read_data(cryptopair)
-    predicted_vals = model(x_train, y_train, x_test)
-    plot_results(cryptopair, predicted_vals, y_test)
+    future_days = 30
+    x_train, y_train, x_test, y_test, scalar, dateindex = read_data(cryptopair, future_days)
+    predicted_vals = model(x_train, y_train, x_test, scalar)
+    plot_results(cryptopair, future_days, dateindex, predicted_vals, y_test)
 
 
 
