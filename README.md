@@ -1,2 +1,3 @@
 # Crypto_Price_Prediction
-Predicting Cryptocurrency Price using Historical Time Series Data (Tensorflow)
+- Predicting Cryptocurrency Price with Historical Time Series Data using Tensorflow
+- Work in progress.
