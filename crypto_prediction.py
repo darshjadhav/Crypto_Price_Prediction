@@ -85,9 +85,9 @@ def plot_results(cryptopair, day_range, dateindex, y_pred, y_test):
     plt.xlabel("Time")
     plt.ylabel("Price")
     plt.legend(loc="upper left")
-    plt.show()
     plt.savefig(f"{cryptopair}.png")
-
+    plt.show()
+    
     
 
 def main():
