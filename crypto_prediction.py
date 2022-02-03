@@ -44,28 +44,9 @@ def read_data(cryptopair):
         x_test.append(testdata[i-day_range:i,0])
 
     x_test = np.array(x_test)
-    x_test.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
+    x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
 
     return x_train, y_train, x_test, y_test
-
-# def prep_data(coindata, testingdata):
-#     day_range = 30
-#     x_train = []
-#     y_train = []
-
-#     # Training Data
-#     for i in range(day_range, len(coindata)):
-#         x_train.append(coindata[i - day_range:i, 0]) # Get data between day range
-#         y_train.append(coindata[i, 0]) # Get close value at day 'n'
-        
-#     x_train, y_train = np.array(x_train), np.array(y_train)
-#     x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
-    
-#     # Testing Data
-#     x_test = testingdata["Close"].values.reshape(-1,1)
-#     x_test = scalar.fit_transform(model_inputs)
-
-#     return x_train, y_train, x_test
     
 
 
