@@ -6,13 +6,13 @@ import datetime as dt
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.layers import Dense, Dropout, LSTM
 from tensorflow.keras.models import Sequential
+from tensorflow.keras.metrics import Accuracy
 import matplotlib.pyplot as plt
 
-def read_data(cryptopair, future_days):
+def read_data(cryptopair, day_range, future_days):
     
     # Training Data
     start = dt.datetime(2016,1,1)
-    # end = dt.datetime(2021,1,1)
     end = dt.datetime.now()
 
     coin = pdr.DataReader(cryptopair, 'yahoo', start, end)
@@ -65,7 +65,7 @@ def model(x_train, y_train, x_test, scalar):
 
     # Train Model
     model.compile(optimizer="adam", loss="mean_squared_error")
-    model.fit(x_train, y_train, epochs=2, batch_size=32)
+    model.fit(x_train, y_train, epochs=20, batch_size=32)
 
     # Test Model
 
@@ -76,28 +76,25 @@ def model(x_train, y_train, x_test, scalar):
 
 
 
-def plot_results(cryptopair, future_days, dateindex, y_pred, y_test):
-    future_bias = np.zeros((future_days,1))
-    predictions = np.concatenate((future_bias,y_pred), axis=0)
-    # print(y_test.shape)
-    # print(predictions.shape)
-    # print(dateindex.shape)
+def plot_results(cryptopair, day_range, dateindex, y_pred, y_test):
     datevals = dateindex[dateindex.shape[0] - y_test.shape[0]:dateindex.shape[0]]
     plt.figure()
     plt.plot(datevals, y_test, color="black", label="Actual Prices")
-    plt.plot(datevals, predictions, color="red", label="Predicted Prices")
+    plt.plot(datevals[day_range:], y_pred, color="red", label="Predicted Prices")
     plt.title(f"{cryptopair} Price Prediction")
     plt.xlabel("Time")
     plt.ylabel("Price")
     plt.legend(loc="upper left")
     plt.show()
+    plt.savefig(f"{cryptopair}.png")
 
     
 
 def main():
     cryptopair = "ETH-USD"
+    day_range = 30
     future_days = 30
-    x_train, y_train, x_test, y_test, scalar, dateindex = read_data(cryptopair, future_days)
+    x_train, y_train, x_test, y_test, scalar, dateindex = read_data(cryptopair, day_range, future_days)
     predicted_vals = model(x_train, y_train, x_test, scalar)
     plot_results(cryptopair, future_days, dateindex, predicted_vals, y_test)
 
